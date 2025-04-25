@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 
 void main() {
   runApp(MyApp());
@@ -369,6 +372,8 @@ class _ChatPageState extends State<ChatPage> {
   final TextEditingController _controller = TextEditingController();
   List<String> messages = [];
   List<Map<String, String>> suggestedProducts = [];
+  String sexo = "";
+  double precoMax = 0.0;
 
   void _sendMessage() {
     String message = _controller.text;
@@ -381,22 +386,68 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  void _getSuggestions(String message) {
-    // Aqui você pode implementar a lógica de recomendação
-    // Para simplificar, vamos usar uma lógica básica
-    if (message.toLowerCase().contains("hidratação")) {
-      suggestedProducts = widget.produtos.where((produto) => produto['categoria'] == "Cabelos").toList();
-    } else if (message.toLowerCase().contains("proteção solar")) {
-      suggestedProducts = widget.produtos.where((produto) => produto['categoria'] == "Rosto").toList();
-    } else {
-      suggestedProducts = [];
-    }
-
-    setState(() {
-      messages.add("IA: Aqui estão algumas sugestões:");
-      for (var produto in suggestedProducts.take(3)) {
-        messages.add(" - ${produto['nome']} (R\$ ${produto['preco']})");
+  void _getSuggestions(String message) async {
+    if (sexo.isEmpty || precoMax == 0.0) {
+      // Pergunta ao usuário sobre sexo e preço se ainda não foram definidos
+      if (sexo.isEmpty) {
+        setState(() {
+          messages.add("IA: Qual é o seu sexo? (feminino/masculino/neutro)");
+        });
+        return; // Espera a resposta do usuário
       }
+      if (precoMax == 0.0) {
+        setState(() {
+          messages.add("IA: Qual é o preço máximo que você quer pagar?");
+        });
+        return; // Espera a resposta do usuário
+      }
+    } else {
+      // Envia o pedido de recomendação
+      final url = Uri.parse('http://127.0.0.1:8000/recomendar'); // Ajuste para o IP local se necessário
+
+      try {
+        final response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({
+            'sexo': sexo,
+            'preco_max': precoMax,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+
+          setState(() {
+            messages.add("IA: Recomendação por gênero: ${data['recomendacao_por_genero']}");
+            messages.add("IA: Produto até R\$${precoMax.toStringAsFixed(2)}: ${data['recomendacao_por_preco']}");
+          });
+        } else {
+          setState(() {
+            messages.add("IA: Erro ao obter recomendação.");
+          });
+        }
+      } catch (e) {
+        setState(() {
+          messages.add("IA: Erro de conexão: $e");
+        });
+      }
+    }
+  }
+
+  void _setSexo(String sexoEscolhido) {
+    setState(() {
+      sexo = sexoEscolhido;
+      messages.add("Você escolheu o sexo: $sexo");
+      _getSuggestions(""); // Agora que o sexo está definido, pede o preço
+    });
+  }
+
+  void _setPreco(double preco) {
+    setState(() {
+      precoMax = preco;
+      messages.add("Você escolheu o preço máximo: R\$ $precoMax");
+      _getSuggestions(""); // Agora que o preço está definido, busca as sugestões
     });
   }
 
@@ -445,8 +496,53 @@ class _ChatPageState extends State<ChatPage> {
               ],
             ),
           ),
+          if (sexo.isEmpty) 
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  ElevatedButton(
+                    onPressed: () => _setSexo("feminino"),
+                    child: Text("Feminino"),
+                  ),
+                  SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () => _setSexo("masculino"),
+                    child: Text("Masculino"),
+                  ),
+                  SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () => _setSexo("neutro"),
+                    child: Text("Neutro"),
+                  ),
+                ],
+              ),
+            ),
+          if (precoMax == 0.0 && sexo.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  ElevatedButton(
+                    onPressed: () => _setPreco(50.0),
+                    child: Text("Até R\$50"),
+                  ),
+                  SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () => _setPreco(100.0),
+                    child: Text("Até R\$100"),
+                  ),
+                  SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () => _setPreco(150.0),
+                    child: Text("Até R\$150"),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
   }
 }
+
