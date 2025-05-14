@@ -2,7 +2,7 @@ class Produto {
   final int id;
   final String nome;
   final double preco;
-  final List<String> categorias;
+  final String categorias;
   final String marca;
   final String imagem;
   final String descricao;
@@ -28,7 +28,7 @@ class Produto {
       id: json['id'],
       nome: json['nome'],
       preco: json['preco'].toDouble(),
-      categorias: List<String>.from(json['categorias']),
+      categorias: json['categorias'],
       marca: json['marca'],
       imagem: json['imagem'],
       descricao: json['descricao'],

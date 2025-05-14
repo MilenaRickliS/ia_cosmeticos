@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:ia_cosmeticos/detalhes.dart';
 import 'package:ia_cosmeticos/favoritos.dart';
 import 'package:ia_cosmeticos/model/produto.dart';
+import 'package:ia_cosmeticos/escolha.dart';
 
 void main() {
   runApp(MyApp());
@@ -36,8 +37,7 @@ class SiteCosmeticosState extends State<SiteCosmeticos> {
   List<Produto> favoritos = [];
 
   Future<List<Produto>> carregarProdutos() async {
-    final jsonString =
-        await DefaultAssetBundle.of(context).loadString('assets/data/cosmeticos.json');
+    final jsonString = await DefaultAssetBundle.of(context).loadString('assets/produtos/cosmeticos1.json');
     final List<dynamic> jsonData = json.decode(jsonString);
     return jsonData.map((item) => Produto.fromJson(item)).toList();
   }
@@ -64,10 +64,11 @@ class SiteCosmeticosState extends State<SiteCosmeticos> {
         }
 
         if (snapshot.hasError) {
-          return const Scaffold(
-            body: Center(child: Text('Erro ao carregar produtos')),
+          return Scaffold(
+            body: Center(child: Text('Erro: ${snapshot.error}')),
           );
         }
+
 
         final produtos = snapshot.data!;
 
@@ -126,7 +127,7 @@ class SiteCosmeticosState extends State<SiteCosmeticos> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const Placeholder(), 
+                                builder: (context) => FilterSelectionPage(), 
                               ),
                             );
                           },

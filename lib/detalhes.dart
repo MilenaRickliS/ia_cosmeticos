@@ -73,7 +73,7 @@ class DetalhesProduto extends StatelessWidget {
                     style: const TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 20),
-                  _buildInfoRow('Categoria', produto.categorias.join(', ')),
+                  _buildInfoRow('Categoria', produto.categorias),
                   _buildInfoRow('Marca', produto.marca),
                   _buildInfoRow('Avaliação', '${produto.avaliacao.toStringAsFixed(1)} ★'),
                   _buildInfoRow('Sexo', produto.sexo),

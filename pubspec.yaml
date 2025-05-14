@@ -59,7 +59,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/imagens/
-    - assets/data/cosmeticos.json
+    - assets/produtos/cosmeticos1.json
   fonts:
     - family: Raleway
       fonts:
