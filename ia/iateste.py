@@ -1,6 +1,7 @@
 from typing import Optional, List
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
@@ -24,6 +25,7 @@ app.add_middleware(
 # Carregar dados
 BASE_DIR = os.path.dirname(__file__)
 DATA_PATH = os.path.join(BASE_DIR, '..', 'assets', 'data', 'cosmeticos.json')
+PLOT_PATH = os.path.join(BASE_DIR, "matriz_confusao.png")  # ← Definida aqui globalmente
 
 with open(DATA_PATH, 'r', encoding='utf-8') as f:
     produtos = json.load(f)
@@ -47,7 +49,7 @@ y = df['categoria_encoded']
 rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
 rf_model.fit(X, y)
 
-# Schema para entrada do usuário
+# Schemas
 class PerfilUsuario(BaseModel):
     preco_medio: float
     avaliacao_minima: float
@@ -55,6 +57,14 @@ class PerfilUsuario(BaseModel):
     infantil: bool
     categoria: Optional[str] = None
 
+class RequisicaoFiltro(BaseModel):
+    preco_max: Optional[float]
+    avaliacao_max: Optional[float]
+    categoria: Optional[str]
+    sexo: Optional[str]
+    infantil: Optional[bool]
+
+# Endpoint de recomendação por perfil
 @app.post("/recomendar_por_perfil")
 def recomendar_por_perfil(perfil: PerfilUsuario):
     sexo_encoded = le_sexo.transform([perfil.sexo.lower()])[0]
@@ -87,13 +97,7 @@ def recomendar_por_perfil(perfil: PerfilUsuario):
         "produtos_recomendados": recomendados
     }
 
-class RequisicaoFiltro(BaseModel):
-    preco_max: Optional[float]
-    avaliacao_max: Optional[float]
-    categoria: Optional[str]
-    sexo: Optional[str]
-    infantil: Optional[bool]
-
+# Endpoint de recomendação por filtros diretos
 @app.post("/recomendar_produtos")
 def recomendar_produtos(filtros: RequisicaoFiltro):
     df_filtrado = df.copy()
@@ -117,7 +121,7 @@ def recomendar_produtos(filtros: RequisicaoFiltro):
 
     return {"produtos": resultados}
 
-# Novo endpoint para avaliar modelo
+# Endpoint para avaliar modelo e salvar matriz
 @app.get("/avaliar_modelo")
 def avaliar_modelo():
     y_pred = rf_model.predict(X)
@@ -130,9 +134,8 @@ def avaliar_modelo():
     plt.xlabel('Predito')
     plt.ylabel('Real')
     plt.title('Matriz de Confusão - RandomForest')
-    plot_path = os.path.join(BASE_DIR, "matriz_confusao.png")
     plt.tight_layout()
-    plt.savefig(plot_path)
+    plt.savefig(PLOT_PATH)
     plt.close()
 
     return {
@@ -140,5 +143,12 @@ def avaliar_modelo():
         "precisao_macro": report['macro avg']['precision'],
         "recall_macro": report['macro avg']['recall'],
         "f1_macro": report['macro avg']['f1-score'],
-        "grafico_matriz_confusao": "matriz_confusao.png"
+        "grafico_matriz_confusao": "http://localhost:8000/grafico_matriz"
     }
+
+# Endpoint para retornar o gráfico gerado
+@app.get("/grafico_matriz")
+def get_grafico_matriz():
+    return FileResponse(path=PLOT_PATH, media_type='image/png', filename="matriz_confusao.png")
+
+#http://localhost:8000/avaliar_modelo
