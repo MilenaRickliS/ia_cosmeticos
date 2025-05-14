@@ -43,7 +43,7 @@
         "marca": "Rexona",
         "imagem": "assets/imagens/desodorante-roll-on.png",
         "descricao": "Desodorante roll-on com aloe vera, protege por até 48h sem álcool etílico.",
-        "avaliacao": 4.3,
+        "avaliacao": 3,
         "sexo": "neutro",
         "infantil": false
     },
@@ -199,7 +199,7 @@
         "marca": "Colorama",
         "imagem": "assets/imagens/Esmalte-Colorama.png",
         "descricao": "Esmalte com secagem rápida, acabamento brilhante e longa duração.",
-        "avaliacao": 4.4,
+        "avaliacao": 3,
         "sexo": "feminino",
         "infantil": false
     },

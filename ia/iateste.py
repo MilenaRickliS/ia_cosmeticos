@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.model_selection import train_test_split, GridSearchCV
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -25,7 +26,7 @@ app.add_middleware(
 # Carregar dados
 BASE_DIR = os.path.dirname(__file__)
 DATA_PATH = os.path.join(BASE_DIR, '..', 'assets', 'data', 'cosmeticos.json')
-PLOT_PATH = os.path.join(BASE_DIR, "matriz_confusao.png")  # ← Definida aqui globalmente
+PLOT_PATH = os.path.join(BASE_DIR, "matriz_confusao.png") 
 
 with open(DATA_PATH, 'r', encoding='utf-8') as f:
     produtos = json.load(f)
@@ -37,32 +38,37 @@ le_categoria = LabelEncoder()
 le_sexo = LabelEncoder()
 
 df['sexo_encoded'] = le_sexo.fit_transform(df['sexo'])
-df['infantil_encoded'] = df['infantil'].map({'não': 0, 'sim': 1})
+df['infantil_encoded'] = df['infantil'].astype(int)
 df['categoria_encoded'] = le_categoria.fit_transform(df['categorias'])
 df['avaliacoes'] = pd.to_numeric(df['avaliacao'], errors='coerce')
 df['preco'] = pd.to_numeric(df['preco'], errors='coerce')
+df['faixa_preco'] = pd.cut(df['preco'], bins=[0, 50, 100, 200, 500, 10000], labels=False)
+df['faixa_avaliacao'] = pd.cut(df['avaliacoes'], bins=[0, 2, 3, 4, 4.5, 5], labels=False)
 
-X = df[['preco', 'avaliacoes', 'sexo_encoded', 'infantil_encoded']]
+X = df[['preco', 'avaliacoes', 'sexo_encoded', 'infantil_encoded', 'faixa_preco', 'faixa_avaliacao']]
 y = df['categoria_encoded']
 
-# Treinar modelo
-rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
-rf_model.fit(X, y)
+# Separar treino/teste
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Schemas
+# GridSearchCV com RandomForest balanceado
+params = {
+    'n_estimators': [100, 200],
+    'max_depth': [None, 10, 20],
+    'min_samples_split': [2, 5]
+}
+grid = GridSearchCV(RandomForestClassifier(class_weight='balanced', random_state=42), param_grid=params, cv=5)
+grid.fit(X_train, y_train)
+
+rf_model = grid.best_estimator_
+
+# Schema
 class PerfilUsuario(BaseModel):
     preco_medio: float
     avaliacao_minima: float
     sexo: str
     infantil: bool
     categoria: Optional[str] = None
-
-class RequisicaoFiltro(BaseModel):
-    preco_max: Optional[float]
-    avaliacao_max: Optional[float]
-    categoria: Optional[str]
-    sexo: Optional[str]
-    infantil: Optional[bool]
 
 # Endpoint de recomendação por perfil
 @app.post("/recomendar_por_perfil")
@@ -77,7 +83,9 @@ def recomendar_por_perfil(perfil: PerfilUsuario):
             perfil.preco_medio,
             perfil.avaliacao_minima,
             sexo_encoded,
-            infantil_encoded
+            infantil_encoded,
+            pd.cut([perfil.preco_medio], bins=[0, 50, 100, 200, 500, 10000], labels=False)[0],
+            pd.cut([perfil.avaliacao_minima], bins=[0, 2, 3, 4, 4.5, 5], labels=False)[0]
         ]]
         categoria_prevista_encoded = rf_model.predict(entrada_usuario)[0]
         categoria_prevista = le_categoria.inverse_transform([categoria_prevista_encoded])[0]
@@ -85,11 +93,13 @@ def recomendar_por_perfil(perfil: PerfilUsuario):
     df_recomendados = df[df['categorias'] == categoria_prevista]
     df_recomendados = df_recomendados[
         (df_recomendados['preco'] <= perfil.preco_medio) &
-        (df_recomendados['avaliacoes'] >= perfil.avaliacao_minima)
+        (df_recomendados['avaliacoes'] >= perfil.avaliacao_minima) &
+        (df_recomendados['sexo'] == perfil.sexo.lower()) &
+        (df_recomendados['infantil'] == perfil.infantil)
     ]
 
     recomendados = df_recomendados.sample(frac=1).head(10)[
-        ['id','nome', 'preco', 'marca', 'imagem', 'descricao', 'avaliacoes', 'categorias', 'sexo', 'infantil']
+        ['id', 'nome', 'preco', 'marca', 'imagem', 'descricao', 'avaliacoes', 'categorias', 'sexo', 'infantil']
     ].to_dict(orient='records')
 
     return {
@@ -97,38 +107,14 @@ def recomendar_por_perfil(perfil: PerfilUsuario):
         "produtos_recomendados": recomendados
     }
 
-# Endpoint de recomendação por filtros diretos
-@app.post("/recomendar_produtos")
-def recomendar_produtos(filtros: RequisicaoFiltro):
-    df_filtrado = df.copy()
-
-    if filtros.preco_max is not None:
-        df_filtrado = df_filtrado[df_filtrado['preco'] <= filtros.preco_max]
-
-    if filtros.avaliacao_max is not None:
-        df_filtrado = df_filtrado[df_filtrado['avaliacao'] <= filtros.avaliacao_max]
-
-    if filtros.categoria:
-        df_filtrado = df_filtrado[df_filtrado['categorias'].str.lower() == filtros.categoria.lower()]
-
-    if filtros.sexo:
-        df_filtrado = df_filtrado[df_filtrado['sexo'].str.lower() == filtros.sexo.lower()]
-
-    if filtros.infantil is not None:
-        df_filtrado = df_filtrado[df_filtrado['infantil'] == ('sim' if filtros.infantil else 'não')]
-
-    resultados = df_filtrado[['nome', 'preco', 'avaliacoes', 'categorias']].head(10).to_dict(orient='records')
-
-    return {"produtos": resultados}
-
-# Endpoint para avaliar modelo e salvar matriz
+# Avaliar modelo
 @app.get("/avaliar_modelo")
 def avaliar_modelo():
-    y_pred = rf_model.predict(X)
-    report = classification_report(y, y_pred, target_names=le_categoria.classes_, output_dict=True)
-    matrix = confusion_matrix(y, y_pred)
+    y_pred = rf_model.predict(X_test)
+    report = classification_report(y_test, y_pred, target_names=le_categoria.classes_, output_dict=True)
+    matrix = confusion_matrix(y_test, y_pred)
 
-    # Gerar gráfico da matriz de confusão
+    # Gráfico da matriz de confusão
     plt.figure(figsize=(10, 8))
     sns.heatmap(matrix, annot=True, fmt='d', xticklabels=le_categoria.classes_, yticklabels=le_categoria.classes_, cmap="Purples")
     plt.xlabel('Predito')
@@ -146,9 +132,7 @@ def avaliar_modelo():
         "grafico_matriz_confusao": "http://localhost:8000/grafico_matriz"
     }
 
-# Endpoint para retornar o gráfico gerado
+# Retorna gráfico salvo
 @app.get("/grafico_matriz")
 def get_grafico_matriz():
     return FileResponse(path=PLOT_PATH, media_type='image/png', filename="matriz_confusao.png")
-
-#http://localhost:8000/avaliar_modelo

@@ -100,7 +100,7 @@ class _ProfileRecommendationPageState extends State<ProfileRecommendationPage> {
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            buildSectionTitle('Categoria desejada (opcional):'),
+            buildSectionTitle('Categoria desejada:'),
             buildCard(
               Column(
                 children: categorias
