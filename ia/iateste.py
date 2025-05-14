@@ -82,7 +82,7 @@ def recomendar_por_perfil(perfil: PerfilUsuario):
     ]
 
     # Embaralhar e retornar até 10 produtos
-    recomendados = df_recomendados.sample(frac=1).head(10)[['nome', 'preco', 'avaliacoes', 'categorias']].to_dict(orient='records')
+    recomendados = df_recomendados.sample(frac=1).head(10)[['id','nome', 'preco', 'marca', 'imagem', 'descricao', 'avaliacoes', 'categorias', 'sexo', 'infantil']].to_dict(orient='records')
 
     return {
         "categoria_prevista": categoria_prevista,
