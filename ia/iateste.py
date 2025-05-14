@@ -50,6 +50,7 @@ class PerfilUsuario(BaseModel):
     avaliacao_minima: float
     sexo: str
     infantil: bool
+    categoria: Optional[str] = None
 
 @app.post("/recomendar_por_perfil")
 def recomendar_por_perfil(perfil: PerfilUsuario):
@@ -57,17 +58,19 @@ def recomendar_por_perfil(perfil: PerfilUsuario):
     sexo_encoded = le_sexo.transform([perfil.sexo.lower()])[0]
     infantil_encoded = 1 if perfil.infantil else 0
 
-    # Preparar entrada para o modelo
-    entrada_usuario = [[
-        perfil.preco_medio,
-        perfil.avaliacao_minima,
-        sexo_encoded,
-        infantil_encoded
-    ]]
+    if perfil.categoria:
+        categoria_prevista = perfil.categoria
+    else:
+        # Fazer previsão com base no modelo
+        entrada_usuario = [[
+            perfil.preco_medio,
+            perfil.avaliacao_minima,
+            sexo_encoded,
+            infantil_encoded
+        ]]
+        categoria_prevista_encoded = rf_model.predict(entrada_usuario)[0]
+        categoria_prevista = le_categoria.inverse_transform([categoria_prevista_encoded])[0]
 
-    # Prever categoria mais provável
-    categoria_prevista_encoded = rf_model.predict(entrada_usuario)[0]
-    categoria_prevista = le_categoria.inverse_transform([categoria_prevista_encoded])[0]
 
     # Filtrar produtos dessa categoria
     df_recomendados = df[df['categorias'] == categoria_prevista]

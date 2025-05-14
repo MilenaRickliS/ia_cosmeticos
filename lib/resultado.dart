@@ -8,7 +8,18 @@ class RecommendationPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Produtos Recomendados')),
+      appBar: AppBar(
+        title: const Text(
+          'Produtos Recomendados',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+            color: Colors.white
+          ),
+        ),
+        backgroundColor: const Color.fromARGB(255, 122, 9, 104),
+        centerTitle: true,
+      ),
       body: ListView.builder(
         itemCount: produtos.length,
         itemBuilder: (context, index) {
@@ -23,6 +34,7 @@ class RecommendationPage extends StatelessWidget {
                 Text('Categoria: ${prod['categorias']}'),
               ],
             ),
+            
           );
         },
       ),

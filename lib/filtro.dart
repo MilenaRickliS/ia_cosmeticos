@@ -16,6 +16,19 @@ class _ProfileRecommendationPageState extends State<ProfileRecommendationPage> {
   String? selectedSexo;
   bool isInfantil = false;
 
+  final List<String> categorias = [
+    'Acessorios',
+    'Cabelos',
+    'Higiene',
+    'Desodorante',
+    'Perfume',
+    'Corpo',
+    'kit',
+    'Maquiagem',
+    'Unhas'
+  ];
+  String? selectedCategoria;
+
   final List<String> sexos = ['Feminino', 'Masculino', 'Neutro'];
 
   Future<void> recomendarProdutosPorPerfil() async {
@@ -32,12 +45,11 @@ class _ProfileRecommendationPageState extends State<ProfileRecommendationPage> {
         "avaliacao_minima": avaliacaoMinima,
         "sexo": sexoInput.toLowerCase(),
         "infantil": isInfantil,
+        "categoria": selectedCategoria,
       }),
     );
 
-    // 👇 Adicione estas linhas para debug
-    print("Status Code: ${response.statusCode}");
-    print("Corpo da Resposta: ${response.body}");
+
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -82,11 +94,23 @@ class _ProfileRecommendationPageState extends State<ProfileRecommendationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Seu Perfil')),
+      appBar: AppBar(title: const Text('Escolha dentre as opções a seguir: ')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
+            // Categoria
+            const Text('Categoria desejada (opcional):'),
+            ...categorias.map((cat) => RadioListTile<String>(
+                  title: Text(cat),
+                  value: cat,
+                  groupValue: selectedCategoria,
+                  onChanged: (val) {
+                    setState(() {
+                      selectedCategoria = val;
+                    });
+                  },
+                )),
             // Preço médio
             const Text('Preço médio aceitável:'),
             Slider(

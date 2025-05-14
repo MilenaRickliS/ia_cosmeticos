@@ -39,7 +39,7 @@ class _FilterSelectionPageState extends State<FilterSelectionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Escolha os filtros')),
+      appBar: AppBar(title: const Text('Recomendação')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -48,11 +48,18 @@ class _FilterSelectionPageState extends State<FilterSelectionPage> {
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: goToRecommendationByProfile,
-              icon: const Icon(Icons.smart_toy),
-              label: const Text('Recomendação por Perfil (IA)'),
+              icon: const Icon(Icons.smart_toy, color: Colors.white,),
+              label: Text('Recomendação de produtos por (IA)',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(30),
                 minimumSize: const Size(double.infinity, 50),
+                backgroundColor: const Color.fromARGB(255, 122, 9, 104),
               ),
             ),
           ],

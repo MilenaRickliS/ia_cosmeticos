@@ -34,7 +34,9 @@ class Produto {
       descricao: json['descricao'],
       avaliacao: json['avaliacao'].toDouble(),
       sexo: json['sexo'],
-      infantil: json['infantil'],
+      infantil: json['infantil'] is String
+          ? json['infantil'] == "sim" || json['infantil'] == "true"
+          : json['infantil'] == true,
     );
   }
 
