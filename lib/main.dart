@@ -169,7 +169,7 @@ class SiteCosmeticosState extends State<SiteCosmeticos> {
                     crossAxisCount: 2,
                     crossAxisSpacing: 20.0,
                     mainAxisSpacing: 20.0,
-                    childAspectRatio: 0.8,
+                    childAspectRatio: 2 / 2,
                   ),
                   itemBuilder: (context, index) {
                     final produto = produtos[index];

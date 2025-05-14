@@ -8,6 +8,33 @@ class RecommendationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (produtos.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Produtos Recomendados',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+          ),),
+          backgroundColor: const Color.fromARGB(255, 122, 9, 104),
+        ),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Text(
+              'Nenhum produto encontrado com os critérios selecionados.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                color: Color.fromARGB(255, 0, 0, 0),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -35,7 +62,6 @@ class RecommendationPage extends StatelessWidget {
             final prod = produtos[index];
             return GestureDetector(
               onTap: () {
-                
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -50,8 +76,7 @@ class RecommendationPage extends StatelessWidget {
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                                      
+                  children: [                   
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Column(
@@ -60,6 +85,7 @@ class RecommendationPage extends StatelessWidget {
                           Text(
                             prod['nome'],
                             maxLines: 2,
+                            textAlign: TextAlign.center,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
@@ -72,6 +98,7 @@ class RecommendationPage extends StatelessWidget {
                             style: const TextStyle(
                               color: Colors.green,
                               fontWeight: FontWeight.w500,
+                              fontSize: 16,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -90,7 +117,8 @@ class RecommendationPage extends StatelessWidget {
                           Chip(
                             label: Text(prod['categorias']),
                             backgroundColor: Colors.purple.shade200,
-                            labelStyle: const TextStyle(color: Colors.white),
+                            labelStyle:
+                                const TextStyle(color: Colors.white),
                           )
                         ],
                       ),
