@@ -68,7 +68,7 @@ class PerfilUsuario(BaseModel):
     avaliacao_minima: float
     sexo: str
     infantil: bool
-    categoria: Optional[str] = None
+    categoria: str
 
 # Endpoint de recomendação por perfil
 @app.post("/recomendar_por_perfil")
