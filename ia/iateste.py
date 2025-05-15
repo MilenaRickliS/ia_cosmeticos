@@ -1,3 +1,6 @@
+# uvicorn iateste:app --reload --host 0.0.0.0
+#pip install -r requirements.txt
+
 from typing import Optional, List
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
