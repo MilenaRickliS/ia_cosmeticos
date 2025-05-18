@@ -32,8 +32,14 @@ class _ProfileRecommendationPageState extends State<ProfileRecommendationPage> {
   final List<String> sexos = ['Feminino', 'Masculino', 'Neutro'];
 
   Future<void> recomendarProdutosPorPerfil() async {
-    final uri = Uri.parse('http://172.32.96.18:8000/recomendar_por_perfil');
+    final uri = Uri.parse('http://192.168.0.7:8000/recomendar_por_perfil');
     final sexoInput = selectedSexo ?? 'Feminino';
+    if (selectedCategoria == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Por favor, selecione uma categoria.")),
+      );
+      return;
+    }
 
     try {
       final response = await http.post(

@@ -2,6 +2,7 @@ fastapi
 uvicorn[standard]
 scikit-learn
 pandas
+numpy
 matplotlib
 seaborn
 pydantic
