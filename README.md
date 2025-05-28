@@ -8,7 +8,7 @@ Esta é uma API desenvolvida com **FastAPI** que recomenda produtos cosméticos 
   - ✅ Categoria
   - 💰 Preço máximo
   - ⭐ Avaliação mínima
-  - 🚻 Sexo (masculino/feminino)
+  - 🚻 Sexo (masculino/feminino/neutro)
   - 👶 Produto infantil (sim/não)
 - Realiza recomendações inteligentes com base nos filtros informados.
 - Treina um modelo de classificação com dados de um catálogo JSON.
@@ -43,7 +43,7 @@ A API disponibiliza endpoints dedicados à **avaliação do modelo de recomenda�
 #### a) Baseline Aleatória
 
 - **Endpoint:** `GET /avaliar_baseline_aleatoria`  
-- **Descrição:** Gera previsões aleatórias com igual probabilidade entre as classes. Serve como referência mínima de desempenho.
+- **Descrição:** Gera previsões aleatórias com igual probabilidade entre as classes. Serve como referência de desempenho.
 
 📈 Gráfico da matriz:  
 `http://localhost:8000/grafico_matriz_baseline`
@@ -76,18 +76,24 @@ Cada avaliação retorna as seguintes métricas:
 - `recall_macro`: Recall médio entre todas as classes.
 - `f1_macro`: F1-score médio entre todas as classes.
 
-Essas métricas permitem comparar o desempenho real do modelo com estratégias simples, garantindo que a IA esteja de fato aprendendo padrões úteis nos dados.
+Essas métricas permitem comparar o desempenho real do modelo com estratégias simples, garantindo que a IA esteja de fato aprendendo padrões úteis com os dados.
 
 
 ## 📁 Estrutura do Projeto
 
 ```
-├── ai/iateste.py                     # API FastAPI com as rotas de recomendação
+├── ai/iateste.py                     # AI FastAPI com as rotas de recomendação
 ├── assets/data/cosmeticos.json       # Catálogo de produtos cosméticos (dados de treino)
+├── assets/imagens                    # Imagens dos produtos cosméticos 
+├── assets/produtos/cosmeticos1.json  # Catálogo de produtos cosméticos (para carregamento no flutter)
 ├── lib/model/produto.dart            # Modelo de dados do produto no Flutter
 ├── lib/main.dart                     # Tela inicial do aplicativo Flutter
+├── lib/detalhes.dart                 # Tela que mostra detalhes dos produtos
+├── lib/favoritos.dart                # Tela que mostra os produtos favoritados
+├── lib/escolha.dart                  # Tela de início da recomendação
 ├── lib/filtro.dart                   # Tela de filtros personalizados
 ├── lib/resultado.dart                # Tela de exibição dos resultados da recomendação
+├── lib/detalhes_recomendados.dart    # Tela de detalhes dos produtos recomendados
 ```
 
 ## 🚀 Como Executar o Projeto
@@ -97,13 +103,13 @@ Essas métricas permitem comparar o desempenho real do modelo com estratégias s
 1. Clone o repositório:
 
 ```bash
-git clone https://github.com/SeuUsuario/seu-repositorio.git
-cd seu-repositorio
+git https://github.com/MilenaRickliS/ia_cosmeticos.git
 ```
 
 2. Crie o ambiente virtual e instale as dependências:
 
 ```bash
+cd ia
 python -m venv venv
 source venv/bin/activate  # ou venv\Scripts\activate no Windows
 pip install -r requirements.txt
@@ -112,7 +118,6 @@ pip install -r requirements.txt
 3. Execute a API:
 
 ```bash
-cd ia
 uvicorn iateste:app --reload --host 0.0.0.0
 ```
 
@@ -126,7 +131,7 @@ flutter pub get
 flutter run
 ```
 
-2. Atualizar IP na página filtro.dart:
+2. Atualize IP na página filtro.dart:
 
 ```bash
 final uri = Uri.parse('http://<SEUIPAQUI>>:8000/recomendar_por_perfil');
